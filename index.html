@@ -233,6 +233,8 @@ canvas{display:block;border-radius:var(--radius-sm);background:var(--bg-card2)}
 
 .diff-btn{background:var(--bg-card2);border:2px solid var(--border);border-radius:var(--radius);padding:14px;cursor:pointer;font-family:inherit;color:var(--text);transition:all .15s;text-align:left;width:100%;margin-bottom:10px}
 .diff-btn:hover{border-color:var(--accent)}
+.diff-dimmed{opacity:.65;border-color:var(--border)!important}
+.diff-dimmed:hover{opacity:.85;border-color:var(--warn)!important}
 .diff-btn.selected{border-color:var(--accent);background:rgba(245,197,24,.06)}
 .diff-btn .diff-title{font-size:16px;font-weight:700;margin-bottom:4px;color:var(--text)}
 .diff-btn .diff-desc{font-size:13px;color:var(--text-sec);line-height:1.4}
@@ -718,8 +720,12 @@ const MISSIONS = [
       {text:'\u00dcberschlage die relativen H\u00e4ufigkeiten in Prozent und bestimme im Kopf die Gr\u00f6\u00dfe des zugeh\u00f6rigen Winkels im Kreisdiagramm (LS S.\u202f181, Aufgabe 2a\u2013b): A) 3 von 4, B) 2 von 6', tag:'Im Unterricht', afb:'I\u2013II', done:false, schritte:'A: 3\u00f74 = 75\u202f% \u2192 75\u202f% \u00d7 3,6\u00b0 = 270\u00b0. B: 2\u00f76 \u2248 33\u202f% \u2192 33\u202f% \u00d7 3,6\u00b0 \u2248 120\u00b0.'},
       {text:'Zeichne ein Kreisdiagramm und ein S\u00e4ulendiagramm zu den Daten der Strichliste aus Beispiel 2 (LS S.\u202f181). Nutze dazu eine Tabellenkalkulation oder K\u00e4stchenpapier.', tag:'Zuhause', afb:'II', done:false, schritte:'1. Absolute H\u00e4ufigkeiten ablesen. 2. Relative H\u00e4ufigkeiten berechnen. 3. Winkel: rel.\u202fH. \u00d7 360\u00b0. 4. Diagramm zeichnen.'}
     ]
-    ,
-    lernpfad:[
+    ,vorQuizAufgaben:[
+      {text:'<strong>LS S. 181, Aufg. 1c–e:</strong> Berechne die relative Häufigkeit für: c) 2 Leute von 20, d) 4 Treffer bei 10 Versuchen, e) 4 Treffer bei 5 Versuchen. Notiere Rechenschritte und Ergebnisse in Prozent im Heft.', hinweis:'Formel: abs. Häufigkeit ÷ Gesamtzahl × 100', loesung:'c) 10 %; d) 40 %; e) 80 %'},
+      {text:'<strong>LS S. 182, Aufg. 6:</strong> 80 Schüler in Kl. 5 (64 in Mensa), 90 in Kl. 6 (63), 84 in Kl. 7 (63). Berechne alle drei relativen Häufigkeiten in Prozent und vergleiche sie in einem Satz.', hinweis:'Rechne für jede Klasse: Anzahl Mensa ÷ Gesamtschüler × 100', loesung:'Kl. 5: 80 %; Kl. 6: 70 %; Kl. 7: 75 %. Klasse 5 hat den höchsten Mensaanteil.'},
+      {text:'<strong>LS S. 183, Aufg. 13:</strong> Bei einer Freizeitpark-Wahl ergaben sich 3 Kreisdiagramme. Überprüfe, ob Diagramme 2 und 3 zu Diagramm 1 passen. Begründe schriftlich.', hinweis:'Prüfe: Stimmen die Anteile der Sektoren überein? Ergeben sie zusammen 100 %?', loesung:'Nur wenn Sektorgrößen dieselben Daten repräsentieren, passen Diagramme zusammen.'}
+    ]
+    ,lernpfad:[
       {
         titel:'Was sind Daten?',
         icon:'📊',
@@ -850,7 +856,12 @@ const MISSIONS = [
       {text:'Bearbeite Aufgabe 6 (LS S.\u202f182): Von den 80 Sch\u00fclern der Klassenstufe 5 a\u00dfen gestern 64 in der Mensa, von den 90 Sch\u00fclern der Klassenstufe 6 waren es 63 und von den 84 Sch\u00fclern der 7. Klassen ebenfalls 63. Gib die relativen H\u00e4ufigkeiten in Prozent an und vergleiche sie.', tag:'Im Unterricht', afb:'I\u2013II', done:false, schritte:'Klasse 5: 64\u00f780. Klasse 6: 63\u00f790. Klasse 7: 63\u00f784. Dann \u00d7 100 f\u00fcr Prozent.'},
       {text:'Bearbeite Aufgabe 7 (LS S.\u202f182): \u00dcbertrage die Tabelle zu den Urlaubszielen in dein Heft, erg\u00e4nze die relativen H\u00e4ufigkeiten und stelle die Ergebnisse in einem S\u00e4ulen- und Kreisdiagramm dar. (Deutschland: 32, Europa ohne D: 40, Nordamerika: 4, Sonstige: 4)', tag:'Im Unterricht', afb:'II', done:false, schritte:'Summe: 80. Relative H\u00e4ufigkeiten berechnen, Winkel: rel.\u202fH. \u00d7 360\u00b0, Diagramme zeichnen.'}
     ],
-    lernpfad:[
+    vorQuizAufgaben:[
+      {text:'<strong>LS S. 181, Aufg. 2a–b:</strong> Bestimme im Kopf den Winkel im Kreisdiagramm für A) 3 von 4 und B) 2 von 6. Notiere Rechenweg und Ergebnis im Heft.', hinweis:'Formel: Anteil × 360° (oder Prozent × 3,6°)', loesung:'A: 75 % → 270°; B: ca. 33 % → 120°'},
+      {text:'<strong>LS S. 182, Aufg. 7:</strong> Urlaubsziele: Deutschland 32, Europa o. D. 40, Nordamerika 4, Sonstige 4. Übertrage die Tabelle ins Heft, ergänze relative Häufigkeiten und zeichne ein Säulen- und Kreisdiagramm.', hinweis:'Summe = 80. Rel. H. = Anzahl ÷ 80. Winkel = rel. H. × 360°.', loesung:'D: 40 %; Europa: 50 %; Nordamerika: 5 %; Sonstige: 5 %.'},
+      {text:'<strong>LS S. 183, Aufg. 14 (Wahr oder falsch?):</strong> Entscheide: a) Es gibt Anteile, die keine relativen Häufigkeiten sind. b) Aus absoluten Häufigkeiten kann man stets relative berechnen. c) Umgekehrt auch? Begründe jeden Satz.', hinweis:'Denke an das Verhältnis: rel. H. = abs. H. ÷ Gesamt. Was brauchst du jeweils?', loesung:'a) falsch; b) wahr; c) nur wenn die Gesamtzahl bekannt ist.'}
+    ]
+    ,lernpfad:[
       {
         titel:'Was ist eine relative H\u00e4ufigkeit?',
         icon:'\U0001f4ca',
@@ -955,7 +966,12 @@ const MISSIONS = [
       {text:'Bearbeite Aufgabe 3 (LS S.\u202f187): Emil hat letzte Woche wie folgt am Klavier ge\u00fcbt \u2013 Mo: 10\u202fmin, Di: 8\u202fmin, Mi: 5\u202fmin, Do: 10\u202fmin, Fr: 18\u202fmin, Sa: 12\u202fmin, So: 0\u202fmin. Bestimme das arithmetische Mittel und den Median der t\u00e4glichen \u00dcbezeit.', tag:'Im Unterricht', afb:'I', done:false, schritte:'Summe: 10+8+5+10+18+12+0 = 63\u202fmin. Mittel: 63\u00f77 = 9\u202fmin. Sortieren, Median ablesen.'},
       {text:'Bearbeite Aufgabe 11 (LS S.\u202f188): Stelle die Informationen aus dem Zeitungsartikel \u201eJedes vierte Kind hat keine Geschwister\u201c in einem Kreisdiagramm dar.', tag:'Im Unterricht', afb:'II', done:false, schritte:'Werte aus dem Artikel ablesen, relative H\u00e4ufigkeiten berechnen, Winkel berechnen (\u00d7 3,6\u00b0), Kreisdiagramm zeichnen.'}
     ],
-    lernpfad:[
+    vorQuizAufgaben:[
+      {text:'<strong>LS S. 187, Aufg. 1a–b:</strong> Bestimme das arithmetische Mittel und den Median der Liste: 4; 5; 3; 0; 3; 1. Zeige den vollständigen Rechenweg im Heft.', hinweis:'Median: sortieren → Mitte nehmen. Mittel: Summe ÷ Anzahl.', loesung:'Sortiert: 0;1;3;3;4;5. Median = (3+3)÷2 = 3. Mittel = 16÷6 ≈2,67.'},
+      {text:'<strong>LS S. 187, Aufg. 3:</strong> Emil übt Klavier: Mo 10, Di 8, Mi 5, Do 10, Fr 18, Sa 12, So 0 Minuten. Berechne arithmetisches Mittel und Median. Welcher Wert beschreibt die typische Übezeit besser?', hinweis:'Summe aller Werte berechnen, dann durch 7 teilen. Für Median: sortieren!', loesung:'Summe = 63 min. Mittel = 9 min. Sortiert: 0;5;8;10;10;12;18 → Median = 10 min.'},
+      {text:'<strong>LS S. 188, Aufg. 5:</strong> Die Durchschnittstemperatur der letzten 3 Tage betrug 17 °C. Gib zwei Beispiele an, welche Temperaturen an den drei Tagen geherrscht haben könnten, und vergleiche mit deinem Partner.', hinweis:'Bedingung: Summe der drei Temperaturen = 3 × 17 = 51 °C.', loesung:'Z. B. 15, 17, 19 °C (Summe 51) oder 10, 20, 21 °C (Summe 51).'}
+    ]
+    ,lernpfad:[
       {
         titel:'Median & arithmetisches Mittel',
         icon:'\U0001f522',
@@ -1037,7 +1053,12 @@ const MISSIONS = [
       {text:'Bearbeite Aufgabe 1 (LS S.\u202f192): Untersuche, welche der Listen durch einen der nebenstehenden Boxplots veranschaulicht wird. A: 1; 1; 5; 5; 6; 8; 10 \u2013 B: 1; 3; 3; 4; 6; 7; 8; 10 \u2013 C: 1; 2; 3; 3; 7; 7; 9; 10', tag:'Im Unterricht', afb:'I\u2013II', done:false, schritte:'F\u00fcr jede Liste: sortieren \u2192 Min, Q1, Median, Q3, Max bestimmen \u2192 mit den Boxplots vergleichen.'},
       {text:'Bearbeite Aufgabe 4 (LS S.\u202f192): Die Mitglieder dreier Mannschaften sammelten in einem Wettkampf Punkte (Boxplots A, B, C). Lies die Boxplots ab und beantworte alle Fragen a) und b).', tag:'Im Unterricht', afb:'II\u2013III', done:false, schritte:'1. Min, Q1, Median, Q3, Max jeder Gruppe ablesen. 2. Mediane vergleichen. 3. Aussage zur zweit- und drittbesten Gruppe beurteilen.'}
     ],
-    lernpfad:[
+    vorQuizAufgaben:[
+      {text:'<strong>LS S. 192, Aufg. 1:</strong> Untersuche, welche der Listen A, B oder C durch den abgebildeten Boxplot veranschaulicht wird. Begründe deine Wahl schriftlich.', hinweis:'Bestimme für jede Liste: Min, Q1, Median, Q3, Max. Vergleiche mit dem Boxplot.', loesung:'Berechne alle 5 Kennwerte und prüfe, welche Liste passt.'},
+      {text:'<strong>LS S. 191, Beispiel 1:</strong> Beim Sponsorenlauf wurden folgende Beträge eingenommen (s. S. 191). Stelle die Einnahmen als Boxplot und als Säulendiagramm dar und vergleiche die Darstellungen.', hinweis:'Sortiere alle Werte. Bestimme die 5 Kennwerte. Zeichne beide Diagramme.', loesung:'Boxplot: kompakte Lage- und Streuungsinfo. Säulendiagramm: detaillierte Häufigkeiten.'},
+      {text:'<strong>LS S. 193, Aufg. 7 (Gilt immer – gilt nie):</strong> Entscheide für jede Aussage und begründe: a) Median liegt in der Box. b) Arithm. Mittel liegt in der Box. c) Für Boxplot braucht man mind. 5 Daten. d) Es gibt Boxplots, bei denen die Box die Länge 0 hat.', hinweis:'Was ist die Box genau (Q1 bis Q3)? Was ist damit definiert?', loesung:'a) immer wahr; b) manchmal; c) immer wahr; d) manchmal wahr (wenn Q1 = Q3).'}
+    ]
+    ,lernpfad:[
       {
         titel:'Was ist ein Boxplot?',
         icon:'\U0001f4e6',
@@ -1112,7 +1133,12 @@ const MISSIONS = [
       {text:'Bearbeite Aufgabe 1 (LS S.\u202f196): Sortiere die Daten der ersten und zweiten Sch\u00e4tzung und veranschauliche sie durch je einen Boxplot. Beurteile, ob die Lerngruppe als Ganzes ihr Zeitgef\u00fchl verbessert hat.', tag:'Im Unterricht', afb:'I\u2013III', done:false, schritte:'1. Daten sortieren (1. und 2. Sch\u00e4tzung getrennt). 2. Min, Q1, Median, Q3, Max bestimmen. 3. Boxplots zeichnen. 4. Vergleichen und beurteilen.'},
       {text:'Bearbeite Aufgabe 2 (LS S.\u202f196): Miss mit deiner Fingerspanne, wie breit der Klassenraum ist. Arbeite in Zweierteams und veranschauliche die Messergebnisse durch ein geeignetes Diagramm.', tag:'Im Unterricht', afb:'II', done:false, schritte:'1. Fingerspannen messen. 2. Ergebnisse sammeln. 3. Geeignetes Diagramm w\u00e4hlen (Boxplot oder S\u00e4ulendiagramm). 4. Vergleichen.'}
     ],
-    lernpfad:[
+    vorQuizAufgaben:[
+      {text:'<strong>LS S. 195, Aufg. 4:</strong> In einer Klinik kamen 22 Kinder zur Welt (Geburtsgewichte s. S. 195). Veranschauliche die Gewichte mithilfe eines Boxplots und eines Säulendiagramms mit 500-g-Klassen.', hinweis:'Sortiere die Daten. Bilde Klassen: 2000–2500 g, 2500–3000 g, usw. Für Boxplot: 5 Kennwerte bestimmen.', loesung:'Klassen bilden, absolute Häufigkeiten zählen, Boxplot und Säulendiagramm zeichnen.'},
+      {text:'<strong>LS S. 194, Fehlerquellen:</strong> Beim Zeitgefühl-Experiment schätzt eine Gruppe 2× eine Minute. Nenne drei konkrete Fehlerquellen und erkläre, wie man sie vermeiden kann.', hinweis:'Denke an: Schreibgeräusche, Uhren im Raum, Ablenkung durch andere Personen.', loesung:'1. Lautlos auf Zettel schreiben. 2. Tickende Uhren abdecken. 3. Nicht auf andere schauen.'},
+      {text:'<strong>LS S. 196, Aufg. 3:</strong> Plane und führe ein Handbreiten-Experiment durch. Gibt es einen Unterschied zwischen rechter und linker Hand? Veranschauliche mit Boxplot und Säulendiagramm.', hinweis:'Frage präzise formulieren → Messplan erstellen → Fehlerquellen überlegen → messen → auswerten.', loesung:'Systematisch planen: wer misst, womit, wie oft. Daten erheben und auswerten.'}
+    ]
+    ,lernpfad:[
       {
         titel:'Alle Werkzeuge auf einen Blick',
         icon:'\U0001f9f0',
@@ -1185,7 +1211,12 @@ const MISSIONS = [
       {text:'Bearbeite Aufgabe 18 (LS S.\u202f201): Sebi, Johanna, Ciara und Finn. Das arithmetische Mittel der K\u00f6rpergr\u00f6\u00dfen betr\u00e4gt 155\u202fcm. Gib drei M\u00f6glichkeiten an, wie die vier Gr\u00f6\u00dfen sein k\u00f6nnten.', tag:'Zuhause', afb:'II', done:false, schritte:'Bedingung: Summe = 4 \u00d7 155 = 620\u202fcm. Finde drei verschiedene Kombinationen.'},
       {text:'Bearbeite Aufgabe 19 (LS S.\u202f201): Johanna meint, im Mittel lesen 40\u202f% regelm\u00e4\u00dfig die PopNews. Lara sagt, es sind 38,3\u202f%. Erkl\u00e4re, worin Johannas Gedankenfehler besteht.', tag:'Im Unterricht', afb:'III', done:false, schritte:'Berechne: (60+50+10)\u00f73 = 40\u202f% stimmt zuf\u00e4llig. Aber: Man darf nicht einfach Prozentzahlen mitteln \u2013 die Stichprobengr\u00f6\u00dfen sind verschieden (10, 30, 20 Befragte)!'}
     ],
-    lernpfad:[
+    vorQuizAufgaben:[
+      {text:'<strong>LS S. 198, Aufg. 1a–b:</strong> Bestimme Median und Mittelwert der gegebenen Liste und vergleiche, welches Maß die „mittlere“ Größe besser beschreibt. Schreibe einen erläuternden Satz.', hinweis:'Median: sortieren → Mitte. Mittelwert: Summe ÷ Anzahl. Gibt es Ausreißer?', loesung:'Bei Ausreißern ist der Median fairer; bei symmetrischen Daten sind beide ähnlich.'},
+      {text:'<strong>LS S. 200, Aufg. 14:</strong> Oskar gibt den Mittelwert der Kärtchen ohne Rechnung an. Beschreibe, wie er vorgeht. Untersuche auch die Mediane der vier Kärtchen A–D.', hinweis:'Suche nach symmetrischen Zahlenreihen. Wann ist der mittlere Wert = Mittelwert?', loesung:'Bei symmetrisch angeordneten Werten ist der mittlere Wert gleich dem Mittelwert.'},
+      {text:'<strong>LS S. 201, Aufg. 19:</strong> Johanna meint, im Mittel lesen 40 % regelmäßig die PopNews ((60+50+10)÷3). Lara sagt, es sind 38,3 %. Erkläre Johannas Gedankenfehler schriftlich.', hinweis:'Wie viele Personen wurden jeweils befragt? Darf man Prozentzahlen einfach mitteln?', loesung:'Nein: 10+30+20 = 60 Befragte. Gew. Mittel: (6+15+2)÷60 ≈38,3 %. Stichprobengrößen sind verschieden!'}
+    ]
+    ,lernpfad:[
       {
         titel:'Echte Wissenschaft: Daten erheben',
         icon:'\U0001f52c',
@@ -1237,7 +1268,12 @@ const MISSIONS = [
       type:'calc', correct:30, unit:'',
       erklaerung:'8 + 6 + 5 + 5 + 6 = 30 Gummib\u00e4ren'
     },
-    quiz:[
+    vorQuizAufgaben:[
+      {text:'<strong>LS S. 181, Aufg. 1a–b (Kopfrechnen):</strong> Berechne relative Häufigkeiten für: a) 2 g von 100 g, b) 12 Treffer bei 200 Losen. Rechne im Kopf und schreibe das Ergebnis in % auf.', hinweis:'Formel: abs. H. ÷ Gesamt × 100. Bei 1b: 12 ÷ 200 = ?', loesung:'a) 2 %; b) 6 %.'},
+      {text:'<strong>Eigene Datenerhebung:</strong> Zähle die Farben in deiner Gummibären-Packung und trage sie in eine Häufigkeitstabelle im Heft ein. Berechne alle relativen Häufigkeiten in Prozent.', hinweis:'Tabelle: Farbe | absolute H. | relative H. (%). Summe rel. H. muss 100 % ergeben.', loesung:'Individuelle Antwort. Kontrolle: Σ abs. H. = Gesamtanzahl; Σ rel. H. = 100 %.'},
+      {text:'<strong>LS S. 197, Aufg. 10:</strong> Jan versucht, wie schwer eine Schokolinse im Durchschnitt ist. a) Kommentiere sein Vorgehen. b) Formuliere eine eigene Frage für einen anderen Untersuchungsgegenstand.', hinweis:'Was macht Jan? Wie viele misst er? Was wäre genauer?', loesung:'Mehr messen = genauerer Mittelwert. Eigene Frage: z. B. „Wie schwer ist ein Gummibär im Durchschnitt?“'}
+    ]
+    ,quiz:[
       { type:'calc', afb:1, frage:'In deiner Packung sind 30 Gummib\u00e4ren, davon 9 rote. Wie gro\u00df ist die relative H\u00e4ufigkeit von Rot in Prozent?', correct:30, unit:'%', tipp:'9 \u00f7 30 \u00d7 100 = ?', rechenweg:'9 \u00f7 30 = 0,3 \u2192 \u00d7 100 = 30\u202f%' },
       { type:'mc', afb:2, frage:'Dein Mitsch\u00fcler hat andere Ergebnisse als du. Was bedeutet das?', options:['Einer von euch hat Fehler gemacht','Zuf\u00e4llige Schwankungen \u2013 das ist normal bei Stichproben','Die Fabrik l\u00fcgt','Der Mitsch\u00fcler hat falsch gez\u00e4hlt'], correct:1, erklaerung:'Zuf\u00e4llige Schwankungen in Stichproben sind normal! Genau deshalb wiederholen Wissenschaftler ihre Versuche.' },
       { type:'reflect', afb:3, frage:'Wie k\u00f6nntest du dein Ergebnis noch sicherer machen?', optionen:['Mehr Packungen z\u00e4hlen und die Daten zusammenfassen','Eine neue Methode erfinden','Das Ergebnis anpassen, bis es stimmt'], correct:0, erklaerung:'Mehr Daten = zuverl\u00e4ssigeres Ergebnis. Das ist das Gesetz der gro\u00dfen Zahlen!' },
@@ -2949,27 +2985,91 @@ let quizData=null;
 function renderVerhoer(el){
   const m=currentMission;
   const av=getAvatar();
-  // Difficulty selection
-  el.innerHTML=`
-    <div class="avatar-bubble">
-      <div class="av-icon">${av.icon}</div>
-      <div class="av-text">Jetzt kommt das Verhör! Wähle deinen Schwierigkeitsgrad:</div>
-    </div>
-    <button class="diff-btn" id="diff-basis" data-diff="basis">
-      <div class="diff-title">🟢 Basis-Ermittler</div>
-      <div class="diff-desc">Standardfragen – AFB I & II. Für alle!</div>
-    </button>
-    <button class="diff-btn" id="diff-chef" data-diff="chef">
-      <div class="diff-title">🔴 Chefinspektor-Modus</div>
-      <div class="diff-desc">+ Denk-Aufgaben (AFB III) – für echte Profis!</div>
-    </button>
-  `;
-  ['basis','chef'].forEach(d=>{
-    document.getElementById('diff-'+d).addEventListener('click',()=>{
-      getMissionState(m.id).difficulty=d;
-      startQuiz(d);
+  const vqa=m.vorQuizAufgaben||[];
+  const ms=getMissionState(m.id);
+  if(!ms.heftCheck) ms.heftCheck=[];
+
+  function heftCheckDone(){ return vqa.length>0 && ms.heftCheck.length>=vqa.length; }
+
+  function renderHeftCheck(){
+    const allChecked=heftCheckDone();
+    el.innerHTML=`
+      <div class="avatar-bubble">
+        <div class="av-icon">${av.icon}</div>
+        <div class="av-text">Bevor es losgeht: Hast du diese ${vqa.length} Aufgaben im Heft gelöst? Hake sie ab!</div>
+      </div>
+      <div class="card card-gold" style="margin-bottom:14px">
+        <div class="section-label" style="margin-bottom:10px">📓 Heft-Check vor dem Quiz</div>
+        ${vqa.map((a,i)=>{
+          const done=ms.heftCheck.includes(i);
+          return `<div id="hc-item-${i}" style="display:flex;align-items:flex-start;gap:12px;padding:12px;border-radius:10px;margin-bottom:8px;background:${done?'rgba(52,211,153,.08)':'var(--bg-card2)'};border:1.5px solid ${done?'var(--ok)':'var(--border-strong)'};cursor:pointer;transition:all .2s" data-hc="${i}">
+            <div style="width:28px;height:28px;border-radius:6px;border:2px solid ${done?'var(--ok)':'var(--border-strong)'};background:${done?'var(--ok)':'transparent'};display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px;color:#0b1622;font-weight:700;transition:all .2s">${done?'✓':''}</div>
+            <div style="flex:1">
+              <div style="font-size:14px;line-height:1.6;color:var(--text);margin-bottom:6px">${a.text}</div>
+              <div style="font-size:12px;color:var(--text-dim)">💡 ${a.hinweis}</div>
+              <details style="margin-top:6px"><summary style="font-size:12px;color:var(--cyan);cursor:pointer">Lösung anzeigen</summary><div style="font-size:12px;color:var(--ok);margin-top:4px;padding:6px;background:rgba(52,211,153,.07);border-radius:6px">${a.loesung}</div></details>
+            </div>
+          </div>`;
+        }).join('')}
+        <div style="margin-top:8px;font-size:13px;color:var(--text-dim);text-align:center">${ms.heftCheck.length} / ${vqa.length} abgehakt</div>
+      </div>
+      <div style="margin-bottom:12px">
+        <div class="section-label">Schwierigkeitsgrad wählen</div>
+        <button class="diff-btn ${allChecked?'':'diff-dimmed'}" id="diff-basis" data-diff="basis">
+          <div class="diff-title">🟢 Basis-Ermittler</div>
+          <div class="diff-desc">Standardfragen – AFB I & II. Für alle!${allChecked?' ✓ Bereit!':''}</div>
+        </button>
+        <button class="diff-btn ${allChecked?'':'diff-dimmed'}" id="diff-chef" data-diff="chef">
+          <div class="diff-title">🔴 Chefinspektor-Modus</div>
+          <div class="diff-desc">+ Denk-Aufgaben (AFB III) – für echte Profis!${allChecked?' ✓ Bereit!':''}</div>
+        </button>
+        ${!allChecked?`<div style="font-size:12px;color:var(--warn);text-align:center;margin-top:8px">⚠️ Noch ${vqa.length-ms.heftCheck.length} Heft-Aufgabe(n) offen – du kannst trotzdem starten!</div>`:''}
+      </div>
+    `;
+
+    // Bind checkbox clicks
+    vqa.forEach((_,i)=>{
+      document.getElementById(`hc-item-${i}`)?.addEventListener('click',()=>{
+        if(ms.heftCheck.includes(i)) ms.heftCheck=ms.heftCheck.filter(x=>x!==i);
+        else ms.heftCheck.push(i);
+        saveState();
+        renderHeftCheck();
+      });
     });
-  });
+
+    ['basis','chef'].forEach(d=>{
+      document.getElementById('diff-'+d)?.addEventListener('click',()=>{
+        getMissionState(m.id).difficulty=d;
+        startQuiz(d);
+      });
+    });
+  }
+
+  if(vqa.length===0){
+    // No vorQuizAufgaben – show diff selection directly
+    el.innerHTML=`
+      <div class="avatar-bubble">
+        <div class="av-icon">${av.icon}</div>
+        <div class="av-text">Jetzt kommt das Verhör! Wähle deinen Schwierigkeitsgrad:</div>
+      </div>
+      <button class="diff-btn" id="diff-basis" data-diff="basis">
+        <div class="diff-title">🟢 Basis-Ermittler</div>
+        <div class="diff-desc">Standardfragen – AFB I & II. Für alle!</div>
+      </button>
+      <button class="diff-btn" id="diff-chef" data-diff="chef">
+        <div class="diff-title">🔴 Chefinspektor-Modus</div>
+        <div class="diff-desc">+ Denk-Aufgaben (AFB III) – für echte Profis!</div>
+      </button>
+    `;
+    ['basis','chef'].forEach(d=>{
+      document.getElementById('diff-'+d)?.addEventListener('click',()=>{
+        getMissionState(m.id).difficulty=d;
+        startQuiz(d);
+      });
+    });
+  } else {
+    renderHeftCheck();
+  }
 }
 
 function startQuiz(difficulty){
@@ -3716,6 +3816,84 @@ document.getElementById('export-moodle-btn')?.addEventListener('click',()=>{
 
 document.getElementById('export-pdf-btn')?.addEventListener('click', openAuswertung);
 
+
+function schuelerUebungsseite(allMissions, getMissionState){
+  const gut = allMissions.filter(m => getMissionState(m.id).completed && getMissionState(m.id).score >= 80);
+  const unsicher = allMissions.filter(m => getMissionState(m.id).score > 0 && getMissionState(m.id).score < 80);
+  const nichtGestartet = allMissions.filter(m => !getMissionState(m.id).score || getMissionState(m.id).score === 0);
+
+  const UEBUNGEN = {"m0": [["LS S. 181, Aufg. 1 (Kopfrechnen)", "Berechne relative Häufigkeiten für alle 6 Teilaufgaben a–f. Notiere Rechenwege."], ["LS S. 182, Aufg. 4", "Bearbeite die Aufgabe über Elfmeterschießen: Relative Häufigkeiten, Kreisdiagramm, Winkel."], ["LS S. 183, Aufg. 8", "Schätze die im Kreisdiagramm dargestellten rel. Häufigkeiten und kontrolliere durch Nachmessen."]], "m1": [["LS S. 181, Aufg. 2 (alle Teile)", "Bestimme alle Winkel für Anteile A–E im Kreisdiagramm. Überschlage im Kopf, dann nachrechnen."], ["LS S. 182, Aufg. 7", "Urlaubsziele-Diagramme zeichnen: Säulen- und Kreisdiagramm vollständig mit Beschriftung."], ["LS S. 183, Aufg. 10", "April-Wetter: Berechne relative Häufigkeiten der 4 Wetterlagen und zeichne Kreisdiagramm."]], "m2": [["LS S. 187, Aufg. 1 (alle Teile)", "Bestimme arithmetisches Mittel und Median für alle 8 Datenlisten a–h."], ["LS S. 186, Beispiel 1 nacharbeiten", "Bäckerei-Brötchen: Arithmetisches Mittel berechnen und Aussage formulieren."], ["LS S. 188/189, Aufg. 8", "Bestimme Mittel und Median der drei Listen A, B, C und vergleiche die Kennwerte."]], "m3": [["LS S. 192, Aufg. 2", "Boxplots der Marathonzeiten ablesen: Median, Min, Max, Quartile für Männer und Frauen."], ["LS S. 192, Aufg. 3", "75-m-Lauf-Zeiten sortieren, Median bestimmen und Boxplot zeichnen."], ["LS S. 193, Aufg. 6", "Ordne Säulendiagrammen die passenden Boxplots zu und begründe deine Zuordnung."]], "m4": [["LS S. 196, Aufg. 1", "Zeitgefühl-Experiment: Daten sortieren, Boxplots zeichnen, Verbesserung beurteilen."], ["LS S. 195, Aufg. 3", "Handbreiten-Experiment: Ergebnisse in Boxplot und Säulendiagramm darstellen."], ["LS S. 197, Aufg. 7", "Gewichte-Experiment: Daten mit Boxplot und Säulendiagramm auswerten."]], "m5": [["LS S. 198, Aufg. 2", "Tabelle mit Klassengrößen: Bestimme Mediane und arithmetische Mittelwerte, vergleiche."], ["LS S. 199, Aufg. 11", "Mittagstemperaturen: Diagramm ablesen, Mittelwert berechnen, Tage unter Mittelwert zählen."], ["LS S. 201, Aufg. 17 (Gilt immer)", "Alle 4 Aussagen über Median und Mittelwert beurteilen und begründen."]], "bonus": [["LS S. 181, Aufg. 1 (Kopfrechnen)", "Alle 6 Teilaufgaben zur relativen Häufigkeit nochmals selbst lösen."], ["LS S. 182, Aufg. 6", "Mensa-Aufgabe: alle drei Klassen vergleichen und in Satz formulieren."], ["LS S. 197, Aufg. 9", "Streichholzschachteln: Ist die Angabe ein Mittelwert oder eine Mindestangabe? Begründen."]]};
+
+  const gutHtml = gut.length ? gut.map(m => `
+    <div style="display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:6px;background:rgba(0,200,150,.07);border:1px solid rgba(0,200,150,.3);margin-bottom:6px">
+      <span style="font-size:18px">${m.icon}</span>
+      <div>
+        <strong style="color:#00c896">✓ Fall ${m.num}: ${m.title}</strong>
+        <span style="color:#8aa0b8;font-size:11px;margin-left:8px">${getMissionState(m.id).score} %</span>
+      </div>
+    </div>`).join('') :
+    '<p style="color:#8aa0b8;font-size:12px">Noch keine abgeschlossenen Fälle.</p>';
+
+  const unsicherHtml = unsicher.length ? unsicher.map(m => {
+    const ue = UEBUNGEN[m.id] || [];
+    const sc = getMissionState(m.id).score;
+    return `
+    <div style="border:1.5px solid rgba(255,183,3,.4);border-radius:8px;padding:12px;margin-bottom:12px;background:rgba(255,183,3,.04)">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <span style="font-size:18px">${m.icon}</span>
+        <div>
+          <strong style="color:#ffb703">⚡ Fall ${m.num}: ${m.title}</strong>
+          <span style="color:#8aa0b8;font-size:11px;margin-left:8px">${sc} % – noch üben!</span>
+        </div>
+      </div>
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:#8aa0b8;margin-bottom:6px;font-weight:700">Empfohlene Übungsaufgaben:</div>
+      ${ue.map((u,i) => `
+        <div style="display:flex;gap:8px;margin-bottom:6px;padding:6px 8px;background:#1a2d40;border-radius:5px">
+          <span style="color:#ffb703;font-weight:700;min-width:16px">${i+1}.</span>
+          <div>
+            <div style="font-size:12px;font-weight:700;color:#e0eaf5">${u[0]}</div>
+            <div style="font-size:11px;color:#8aa0b8;margin-top:2px">${u[1]}</div>
+          </div>
+        </div>`).join('')}
+      <div style="font-size:11px;color:#8aa0b8;margin-top:8px">📖 Schulbuch Seiten: ${m.pages}</div>
+    </div>`;
+  }).join('') :
+    '<p style="color:#8aa0b8;font-size:12px">Keine unsicheren Bereiche – super!</p>';
+
+  const nichtHtml = nichtGestartet.length ? nichtGestartet.map(m =>
+    `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;color:#8aa0b8;font-size:12px">
+      <span>${m.icon}</span> Fall ${m.num}: ${m.title} <span style="color:#345270">(${m.pages})</span>
+    </div>`).join('') :
+    '<p style="color:#00c896;font-size:12px">Alle Fälle gestartet – weiter so!</p>';
+
+  return `
+<div style="page-break-before:always;font-family:'Courier New',monospace;background:#fff;color:#1a1a1a;padding:24px;max-width:800px;margin:0 auto">
+  <div style="border-bottom:2px solid #1a1a1a;padding-bottom:12px;margin-bottom:20px">
+    <div style="font-size:20px;font-weight:700;letter-spacing:2px;text-transform:uppercase">📋 Mein Lernplan</div>
+    <div style="font-size:11px;color:#666;text-transform:uppercase;letter-spacing:2px;margin-top:4px">DatenQuest · Persönliche Übungsempfehlungen · Lambacher Schweizer Klett Kl. 6</div>
+  </div>
+
+  <div style="margin-bottom:20px;padding:12px;background:#f0fff8;border:1px solid #b2f0d8;border-radius:8px">
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#00875a;margin-bottom:8px">✅ Gut verstanden</div>
+    ${gutHtml}
+  </div>
+
+  <div style="margin-bottom:20px">
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#b85c00;margin-bottom:10px;padding-bottom:4px;border-bottom:1px solid #ddd">⚡ Noch üben – gezielte Aufgaben</div>
+    ${unsicherHtml}
+  </div>
+
+  <div style="margin-bottom:16px;padding:12px;background:#f8f9fc;border:1px solid #ddd;border-radius:8px">
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#666;margin-bottom:8px">○ Noch nicht gestartet</div>
+    ${nichtHtml}
+  </div>
+
+  <div style="background:#fffde8;border:1px solid #ffe082;border-radius:8px;padding:12px;font-size:12px;color:#5a4500">
+    <strong>💡 Tipp:</strong> Bearbeite zuerst die ⚡-Aufgaben, dann die nicht gestarteten Fälle. Nutze deinen Fortschritts-Code, um dort weiterzumachen, wo du aufgehört hast.
+  </div>
+</div>`;
+}
+
 function openAuswertung(){
   const name = S.name || 'Detektiv';
   const code = genCode();
@@ -3939,6 +4117,9 @@ function openAuswertung(){
   <span>DatenQuest · Lambacher Schweizer · Klett · Klasse 6 · S. 178–204</span>
   <span>${name} · Code: ${code.slice(0,20)}…</span>
 </div>
+
+<!-- SCHÜLER-LERNPLAN – eigene Druckseite -->
+${schuelerUebungsseite(allMissions, getMissionState)}
 
 <!-- CODE PAGE – eigene Druckseite -->
 <div style="page-break-before:always;margin-top:40px;border:3px dashed #ccc;border-radius:10px;padding:24px;text-align:center">
