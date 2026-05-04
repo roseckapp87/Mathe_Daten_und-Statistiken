@@ -4703,12 +4703,36 @@ document.getElementById('reset-progress-btn')?.addEventListener('click',()=>{
 });
 
 // ========== TYPEWRITER ==========
+// Fix: verhindert vermischte/verschlüsselt wirkende Story-Texte,
+// wenn während der Schreibanimation schnell weitergeklickt wird.
+const TYPEWRITER_TIMERS = new WeakMap();
+
+function clearTypewriter(el){
+  if(!el)return;
+  const oldTimer = TYPEWRITER_TIMERS.get(el);
+  if(oldTimer){
+    clearInterval(oldTimer);
+    TYPEWRITER_TIMERS.delete(el);
+  }
+}
+
 function typewriter(el,text,cb,speed=25){
-  el.textContent='';let i=0;
+  if(!el)return;
+  clearTypewriter(el);
+  const fullText = String(text ?? '');
+  el.textContent='';
+  let i=0;
   const t=setInterval(()=>{
-    el.textContent+=text[i]||'';i++;
-    if(i>=text.length){clearInterval(t);if(cb)cb();}
+    if(i < fullText.length){
+      el.textContent += fullText[i];
+      i++;
+    }else{
+      clearInterval(t);
+      TYPEWRITER_TIMERS.delete(el);
+      if(cb)cb();
+    }
   },speed);
+  TYPEWRITER_TIMERS.set(el,t);
 }
 
 // ========== ONBOARDING ==========
@@ -5779,6 +5803,8 @@ function renderStorySlide(){
 }
 
 function endStory(){
+  clearTypewriter(document.getElementById('story-bubble'));
+  clearTypewriter(document.getElementById('story-scene'));
   if(storyCallback)storyCallback();
   storyCallback=null;
 }
