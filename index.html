@@ -933,9 +933,9 @@ const MISSIONS = [
           erklaerung:'Die <strong>absolute Häufigkeit</strong> lesen wir direkt ab. Die Summe muss der Gesamtzahl entsprechen: 5 + 3 + 2 = 10 ✓',
           visual:'<div style="font-size:14px;line-height:2.2"><div style="color:var(--ok)">✓ keine Mängel: <strong>5</strong></div><div style="color:var(--warn)">⚠ leichte Mängel: <strong>3</strong></div><div style="color:var(--err)">✗ schwere Mängel: <strong>2</strong></div><div style="margin-top:8px;border-top:1px solid var(--border);padding-top:8px">Summe: 5 + 3 + 2 = <strong style="color:var(--accent)">10</strong> ✓</div></div>',
           frage:'Was ist die absolute Häufigkeit von „keine Mängel“?',
-          optionen:['2','3','7','10'],
+          optionen:['2','3','5','10'],
           correct:2,
-          erklaerungRichtig:'Richtig! 7 Fahrräder haben keine Mängel.',
+          erklaerungRichtig:'Richtig! 5 Fahrräder haben keine Mängel.',
           erklaerungFalsch:'Zähle die Striche bei „keine“ in der Strichliste oben.',
           folgebeispiel:{
             erklaerung:'<strong>Absolute Häufigkeit ablesen:</strong> Die absolute Häufigkeit ist die Anzahl der Striche für eine Merkmalsklasse. Nicht die Summe aller Striche – nur die eine Zeile!',
@@ -1661,7 +1661,9 @@ function genCode(){
           h: ms.hintsUsed||0,
           t: ms.time||0,
           d: ms.difficulty||'basis',
-          td: ms.tasksDone||[]
+          td: ms.tasksDone||[],
+          bs: ms.bspStep||0,
+          qi: ms.quizIdx||0
         };
       }
     });
@@ -1704,7 +1706,9 @@ function applyCode(str){
         hintsUsed: ms.h||0,
         time:      ms.t||0,
         difficulty:ms.d||'basis',
-        tasksDone: ms.td||[]
+        tasksDone: ms.td||[],
+        bspStep:   ms.bs||0,
+        quizIdx:   ms.qi||0
       };
     });
   }
@@ -2148,8 +2152,18 @@ function langToggleHTML(){
   </div>`;
 }
 function bindLangToggle(onSwitch){
-  document.getElementById('lang-standard')?.addEventListener('click',()=>{sprachEinfach=false;onSwitch();});
-  document.getElementById('lang-einfach')?.addEventListener('click',()=>{sprachEinfach=true;onSwitch();});
+  document.getElementById('lang-standard')?.addEventListener('click',()=>{
+    sprachEinfach=false;
+    document.getElementById('lang-standard')?.classList.add('active');
+    document.getElementById('lang-einfach')?.classList.remove('active');
+    onSwitch();
+  });
+  document.getElementById('lang-einfach')?.addEventListener('click',()=>{
+    sprachEinfach=true;
+    document.getElementById('lang-einfach')?.classList.add('active');
+    document.getElementById('lang-standard')?.classList.remove('active');
+    onSwitch();
+  });
 }
 
 // ─── PHASE 0: ERKLÄRUNG ───
@@ -2224,7 +2238,8 @@ function renderBeispiel(el){
 
   // Build a mutable step list so we can inject Folgebeispiele
   let steps = bsp.schritte.map(s=>({...s, _extra:false}));
-  let stepIdx = 0;
+  const ms_bsp = getMissionState(currentMission.id);
+  let stepIdx = Math.min(ms_bsp.bspStep||0, steps.length-1);
 
   const renderStep = () => {
     const s = steps[stepIdx];
@@ -2285,8 +2300,8 @@ function renderBeispiel(el){
     }
 
     document.getElementById('bsp-next')?.addEventListener('click',()=>{
-      if(isLast) advancePhase(2);
-      else { stepIdx++; renderStep(); el.scrollTop=0; }
+      if(isLast) { getMissionState(currentMission.id).bspStep=0; saveState(); advancePhase(2); }
+      else { stepIdx++; getMissionState(currentMission.id).bspStep=stepIdx; saveState(); renderStep(); el.scrollTop=0; }
     });
   };
   renderStep();
@@ -3695,6 +3710,13 @@ function renderVerhoer(el){
   const ms=getMissionState(m.id);
   if(!ms.heftCheck) ms.heftCheck=[];
 
+  // Auto-resume: if we have a saved quizIdx > 0, skip directly into the quiz
+  if((ms.quizIdx||0) > 0 && !ms.completed){
+    const diff = ms.difficulty||'basis';
+    startQuiz(diff);
+    return;
+  }
+
   function heftCheckDone(){ return vqa.length>0 && ms.heftCheck.length>=vqa.length; }
 
   // Per-item state: which items have been compared already (revealed)
@@ -3829,7 +3851,10 @@ function startQuiz(difficulty){
   if(difficulty==='basis'){
     questions=questions.filter(q=>q.afb<3);
   }
-  quizData={questions,idx:0,correct:0,hints:0,missionStart:Date.now()};
+  const savedIdx = getMissionState(m.id).quizIdx||0;
+  const resumeIdx = savedIdx < questions.length ? savedIdx : 0;
+  // Restore correct count from saved idx (approximate)
+  quizData={questions,idx:resumeIdx,correct:resumeIdx,hints:0,missionStart:Date.now()};
   renderQuestion();
 }
 
@@ -4230,7 +4255,11 @@ function showFeedbackHint(q){
 
 function nextQuestion(){
   quizData.idx++;
-  if(quizData.idx>=quizData.questions.length){finishQuiz();return}
+  if(quizData.idx>=quizData.questions.length){
+    getMissionState(currentMission.id).quizIdx=0; saveState();
+    finishQuiz(); return;
+  }
+  getMissionState(currentMission.id).quizIdx=quizData.idx; saveState();
   renderQuestion();
 }
 
@@ -4874,6 +4903,8 @@ function schuelerUebungsseite(allMissions, getMissionState){
     if(!sc) return '';
 
     const quiz = m.quiz || [];
+    const schulbuch = m.schulbuchAufgaben || [];
+
     // Approximate per-question correctness from score
     const nCorrect = Math.round((sc/100) * quiz.length);
     const okQ  = quiz.slice(0, nCorrect);
@@ -4881,6 +4912,44 @@ function schuelerUebungsseite(allMissions, getMissionState){
 
     const okTopicsU  = [...new Set(okQ.map(q=>q.topic).filter(Boolean))];
     const errTopicsU = [...new Set(errQ.map(q=>q.topic).filter(Boolean))];
+
+    // Build topic→schulbuch mapping from quelle field
+    // Each schulbuchAufgabe has a quelle like "LS S. 187, Aufgabe 1a"
+    // Quiz questions have topic strings – we match by keyword overlap
+    // Build a keyword-based lookup: split topic into words, match against quelle + text of schulbuchAufgaben
+    function findSchulbuchForTopic(topicStr){
+      if(!topicStr || !schulbuch.length) return null;
+      const topicLower = topicStr.toLowerCase();
+
+      // Map common topic keywords to schulbuch search terms
+      const keyMap = [
+        ['median',        ['median','quartil','mitte']],
+        ['mittel',        ['mittel','durchschnitt','mittelwert']],
+        ['häufigkeit',    ['häufigkeit','häufig']],
+        ['kreisdiagramm', ['kreis','winkel','sektor']],
+        ['boxplot',       ['boxplot','quartil','antennen','spannweite']],
+        ['erhebung',      ['erhebung','untersuchen','fehlerquelle','plan']],
+        ['relative',      ['relativ','prozent','anteil']],
+        ['absolute',      ['absolut','strichliste','urliste']],
+        ['merkmalsklasse',['klasse','klassen','einteilung']],
+      ];
+
+      // Score each schulbuchAufgabe
+      let best = null, bestScore = -1;
+      schulbuch.forEach(sb => {
+        const haystack = ((sb.quelle||'') + ' ' + (sb.text||'').replace(/<[^>]+>/g,'')).toLowerCase();
+        let score = 0;
+        keyMap.forEach(([key, terms]) => {
+          if(topicLower.includes(key)){
+            terms.forEach(t => { if(haystack.includes(t)) score += 2; });
+          }
+        });
+        // Bonus: LS page reference is always good
+        if(sb.quelle && sb.quelle.includes('LS S.')) score += 1;
+        if(score > bestScore){ bestScore=score; best=sb; }
+      });
+      return best;
+    }
 
     let html = '';
 
@@ -4900,17 +4969,25 @@ function schuelerUebungsseite(allMissions, getMissionState){
 
     if(errTopicsU.length){
       html += `<div style="font-size:10px;font-weight:700;text-transform:uppercase;
-                letter-spacing:1.5px;color:#92400e;margin-bottom:5px">
+                letter-spacing:1.5px;color:#92400e;margin-bottom:6px">
                 Das musst du noch üben:</div>`;
       errTopicsU.forEach((t,i) => {
         const q = errQ.find(x=>x.topic===t);
-        html += `<div style="display:flex;gap:6px;align-items:baseline;padding:3px 0;
-                  border-bottom:1px solid #fde68a">
-                  <span style="color:#dc2626;font-weight:700;flex-shrink:0">&#10007;</span>
-                  <div>
+        const sb = findSchulbuchForTopic(t);
+        html += `<div style="margin-bottom:7px;padding:7px 10px;border-radius:6px;
+                  background:#fff8e1;border-left:3px solid #dc2626">
+                  <div style="display:flex;gap:6px;align-items:baseline;margin-bottom:3px">
+                    <span style="color:#dc2626;font-weight:700;flex-shrink:0">&#10007;</span>
                     <div style="font-size:11px;font-weight:700;color:#1a1a1a">${t}</div>
-                    ${q ? `<div style="font-size:10px;color:#6b7280;margin-top:1px">${q.frage.slice(0,80)}${q.frage.length>80?'…':''}</div>` : ''}
                   </div>
+                  ${q ? `<div style="font-size:10px;color:#6b7280;margin-left:16px;margin-bottom:4px">
+                    Deine Fehler-Aufgabe: ${q.frage.replace(/<[^>]+>/g,'').slice(0,90)}${q.frage.replace(/<[^>]+>/g,'').length>90?'…':''}
+                  </div>` : ''}
+                  ${sb ? `<div style="font-size:10px;margin-left:16px;margin-top:2px;
+                    padding:4px 8px;background:#fff3cd;border-radius:4px;
+                    border-left:2px solid #f59e0b;color:#78350f">
+                    <strong>📖 Jetzt üben:</strong> ${sb.quelle}
+                  </div>` : ''}
                 </div>`;
       });
     }
@@ -4937,6 +5014,8 @@ function schuelerUebungsseite(allMissions, getMissionState){
     const ue = (UEBUNGEN[m.id]||[]).map(u=>u.split('|'));
     const sc = getMissionState(m.id).score;
     const analyse = missionAnalyse(m);
+    // Fallback: show generic UEBUNGEN only if no topic-specific analyse available
+    const hasAnalyse = analyse && analyse.includes('Jetzt üben');
     return `
     <div style="border:1.5px solid #fbbf24;border-radius:8px;padding:12px 14px;
                 margin-bottom:12px;background:#fffcf5;break-inside:avoid">
@@ -4945,7 +5024,7 @@ function schuelerUebungsseite(allMissions, getMissionState){
         <span style="font-size:11px;color:#6b7280">${sc}% &middot; ${m.pages}</span>
       </div>
       ${analyse}
-      ${ue.length ? `
+      ${!hasAnalyse && ue.length ? `
       <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;
                   color:#6b7280;margin:10px 0 6px">Empfohlene Schulbuch-Aufgaben:</div>
       ${ue.map((u,i)=>`
@@ -5378,10 +5457,19 @@ ${srHtml}`;
   .page{min-height:100vh}
   .pagebreak{page-break-before:always;break-before:page}
   @media print{
-    body{padding:12px;font-size:12px}
+    body{padding:0;margin:0;font-size:12px}
     .no-print{display:none}
     @page{margin:14mm 16mm;size:A4}
-    .pagebreak{page-break-before:always}
+    .page{
+      page-break-after: always;
+      break-after: page;
+      min-height: 0;
+    }
+    .page:last-child{
+      page-break-after: avoid;
+      break-after: avoid;
+    }
+    .pagebreak{page-break-before:always;break-before:page}
   }
 </style>
 </head>
