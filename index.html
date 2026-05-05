@@ -845,8 +845,8 @@ const MISSIONS = [
       {text:'Eine Strichliste zeigt: Hund: ||||, Katze: |||||, Vogel: ||. Welche Aussage stimmt?', tag:'Direkt lösen', done:false, type:'reflect', afb:2, frage:'Eine Strichliste zeigt: Hund: ||||, Katze: |||||, Vogel: ||. Welche Aussage stimmt?', optionen:['Katze wurde am häufigsten genannt','Vogel wurde am häufigsten genannt','Alle wurden gleich oft genannt'], correct:0, erklaerung:'Katze hat 5 Striche und damit die größte absolute Häufigkeit.', topic:'Strichliste auswerten' }
     ],
     auftraege:[
-      {text:'Erstelle zu dieser Urliste eine Strichliste: Hund, Katze, Hund, Vogel, Katze, Katze, Hund, Hamster.', tag:'Direkt lösen', afb:'I', done:false, schritte:'Zähle jede Tierart mit Strichen. Hund: 3, Katze: 3, Vogel: 1, Hamster: 1.'},
-      {text:'Lies aus deiner Strichliste die absoluten Häufigkeiten ab und berechne die Gesamtzahl der Antworten.', tag:'Direkt lösen', afb:'I', done:false, schritte:'Absolute Häufigkeiten: Hund 3, Katze 3, Vogel 1, Hamster 1. Gesamtzahl: 8.'} 
+      {text:'Erstelle zu dieser Urliste eine Strichliste: Hund, Katze, Hund, Vogel, Katze, Katze, Hund, Hamster.', quelle:'Eigene Aufgabe', tag:'Direkt lösen', afb:'I', done:false, schritte:'Zähle jede Tierart mit Strichen. Hund: 3, Katze: 3, Vogel: 1, Hamster: 1.'},
+      {text:'Lies aus deiner Strichliste die absoluten Häufigkeiten ab und berechne die Gesamtzahl der Antworten.', quelle:'Eigene Aufgabe', tag:'Direkt lösen', afb:'I', done:false, schritte:'Absolute Häufigkeiten: Hund 3, Katze 3, Vogel 1, Hamster 1. Gesamtzahl: 8.'} 
     ],
     vorQuizAufgaben:[
       {text:'<strong>Selbstcheck Daten:</strong> Erkläre im Heft den Unterschied zwischen Urliste, Strichliste und absoluter Häufigkeit.', hinweis:'Urliste = Reihenfolge, Strichliste = Zählen mit Strichen, absolute Häufigkeit = Anzahl.', loesung:'Individuelle Formulierung mit diesen drei Begriffen.'},
@@ -2365,6 +2365,21 @@ function renderAufgabeHTML(a,i){
       <div class="aufgabe-result" id="aufgabe-res-${i}"></div>
     </div>`;
   }
+  // Fallback: aufgabe with only text+schritte (no interactive typ)
+  if(a.text){
+    const quelle = a.quelle || (()=>{
+      const raw=(a.text||'').replace(/<[^>]+>/g,'');
+      const lsM=raw.match(/LS\s+S\.\s*[  ]?[\d–—\-]+(?:[,\s]+Aufg[^\s.,)]*\.?\s*[\d\w,\s –\-]*)?/);
+      if(lsM) return lsM[0].trim();
+      if(raw.includes('Eigene')) return 'Eigene Aufgabe';
+      return null;
+    })();
+    return `<div class="aufgabe-box" id="aufgabe-${i}">
+      ${quelle?`<div class="aufgabe-header">📖 ${quelle}</div>`:''}
+      <div class="aufgabe-text">${a.text}</div>
+      ${a.schritte?`<div style="margin-top:8px;font-size:12px;color:var(--text-dim);background:var(--bg-input);border-radius:6px;padding:8px 10px"><strong>Lösung:</strong> ${a.schritte}</div>`:''}
+    </div>`;
+  }
   return '';
 }
 
@@ -3734,9 +3749,18 @@ function renderVerhoer(el){
         ${vqa.map((a,i)=>{
           const done=ms.heftCheck.includes(i);
           const revealed=ms.heftRevealed.includes(i);
+          const vqQuelle=(()=>{
+            if(a.quelle) return a.quelle;
+            const raw=(a.text||'').replace(/<[^>]+>/g,'');
+            const lsM=raw.match(/LS\s+S\.\s*[  ]?[\d–—\-]+(?:[,\s]+Aufg[^\s.,)]*\.?\s*[\d\w,\s –\-]*)?/);
+            if(lsM) return lsM[0].trim();
+            if(raw.includes('Eigene')) return 'Eigene Aufgabe';
+            return null;
+          })();
           return `<div style="border-radius:10px;margin-bottom:12px;background:${done?'rgba(52,211,153,.07)':'var(--bg-card2)'};border:1.5px solid ${done?'var(--ok)':'var(--border-strong)'};overflow:hidden;transition:all .3s">
+            ${vqQuelle?`<div style="padding:7px 14px 0;font-size:11px;font-weight:700;color:var(--text-dim);letter-spacing:0.5px">📖 ${vqQuelle}</div>`:''}
             <!-- Header -->
-            <div style="display:flex;align-items:center;gap:10px;padding:12px 14px">
+            <div style="display:flex;align-items:center;gap:10px;padding:${vqQuelle?'8px':'12px'} 14px 12px">
               <div style="width:26px;height:26px;border-radius:6px;border:2px solid ${done?'var(--ok)':'var(--border-strong)'};background:${done?'var(--ok)':'transparent'};display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px;color:#0b1622;font-weight:700">${done?'✓':i+1}</div>
               <div style="flex:1;font-size:14px;line-height:1.6;color:var(--text)">${a.text}</div>
             </div>
@@ -4423,10 +4447,20 @@ function renderAuftraegeWorkflow(m){
     const done=ms.tasksDone.includes(i);
     const revealed=ms.auftraegeRevealed.includes(i);
     const afbCol=a.afb?.includes('III')?'var(--err)':a.afb?.includes('II')?'var(--warn)':'var(--cyan)';
+    // Extract quelle: use explicit field, or parse "LS S. X" from text, or "Eigene Aufgabe"
+    const quelle = a.quelle || (()=>{
+      const raw = (a.text||'').replace(/<[^>]+>/g,'');
+      const m2 = raw.match(/LS\s+S\.\s*[ \s]?[\d––\-]+(?:,\s*Aufg[^\s.,)]*\.?\s*[\d\w, –\-]*)?/);
+      if(m2) return m2[0].trim();
+      if(raw.includes('Eigene')) return 'Eigene Aufgabe';
+      return null;
+    })();
     return `<div id="auf-card-${i}" style="border-radius:10px;margin-bottom:14px;
         background:${done?'rgba(52,211,153,.07)':'var(--bg-card2)'};
         border:1.5px solid ${done?'var(--ok)':'var(--border-strong)'};overflow:hidden;transition:all .3s">
-      <div style="display:flex;align-items:flex-start;gap:10px;padding:12px 14px">
+      ${quelle?`<div style="padding:7px 14px 0;font-size:11px;font-weight:700;color:var(--text-dim);
+        letter-spacing:0.5px">📖 ${quelle}</div>`:''}
+      <div style="display:flex;align-items:flex-start;gap:10px;padding:10px 14px 12px">
         <div style="width:28px;height:28px;border-radius:7px;border:2px solid ${done?'var(--ok)':'var(--border-strong)'};
           background:${done?'var(--ok)':'transparent'};display:flex;align-items:center;justify-content:center;
           flex-shrink:0;font-size:14px;color:#0b1622;font-weight:700;margin-top:2px">${done?'✓':i+1}</div>
