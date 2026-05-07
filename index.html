@@ -455,9 +455,10 @@ QRCode.createData=function(typeNumber,errorCorrectLevel,dataList){var rsBlocks=Q
 QRCode.prototype.createBytes=QRCode.prototype.createBytes;
 
 // Public API: generate QR as canvas data URL
-function makeQRDataURL(text, size) {
+function makeQRDataURL(text, size, ecLevel) {
   size = size || 240;
-  var qr = new QRCode(-1, QRErrorCorrectLevel.M);
+  var ecl = ecLevel === 'L' ? QRErrorCorrectLevel.L : ecLevel === 'H' ? QRErrorCorrectLevel.H : QRErrorCorrectLevel.M;
+  var qr = new QRCode(-1, ecl);
   qr.addData(text);
   qr.make();
   var count = qr.getModuleCount();
@@ -1701,92 +1702,151 @@ function showXPPopup(text){
 }
 
 // ========== CODE GEN ==========
+// Ultra-compact format to fit in QR code
+// Format: NAME|avatar|xp|badges|MISSIONS|SR|JOURNAL
+// MISSIONS: id,phase,score,completed,diff,fa_b36,td_b36,bsp,qi per mission (semicolon-sep)
+// SR: missionIdx.questionIdx.fails per item (comma-sep)
+// JOURNAL: mId:date per entry (comma-sep)
+
+function _toB36(n){ const c='0123456789abcdefghijklmnopqrstuvwxyz'; if(!n)return '0'; let s=''; while(n){s=c[n%36]+s;n=Math.floor(n/36);} return s; }
+function _fromB36(s){ return parseInt(s,36)||0; }
+function _faToB36(fa){ 
+  // fa is {0:1,1:0,2:1,...} → bitfield → base36
+  let bits=0; 
+  Object.entries(fa||{}).forEach(([qi,v])=>{ if(v===1||v===true||(v&&v.ok)) bits|=(1<<parseInt(qi)); }); 
+  return _toB36(bits); 
+}
+function _b36ToFa(s,count){
+  const bits=_fromB36(s); const fa={};
+  for(let i=0;i<count;i++){ fa[i]=(bits>>i)&1; }
+  return fa;
+}
+function _tdToB36(td){ let bits=0; (td||[]).forEach(i=>{ bits|=(1<<i); }); return _toB36(bits); }
+function _b36ToTd(s){ const bits=_fromB36(s); const td=[]; for(let i=0;i<16;i++){ if((bits>>i)&1) td.push(i); } return td; }
+
 function genCode(){
   try{
-    // Compact state: only what's needed to restore progress
-    const compact = {
-      n: S.name || '',
-      a: S.avatarIdx || 0,
-      x: S.xp || 0,
-      b: S.badges || [],
-      st: S.streak || 0,
-      sc: S.simCount || 0,
-      ss: S.session || 1,
-      m: {},   // mission states
-      sr: (S.spacedRep||[]).slice(0,20), // max 20 spaced rep items
-      eval: {done:S.evalDone||false, r:S.evalResponses||{}},
-      j: (S.journal||[]).slice(0,10).map(e=>({d:e.date,t:e.text?.slice(0,80)||'',id:e.missionId,r:e.reflection?.slice(0,200)||'',s:e.starter?.slice(0,80)||''}))
-    };
-    MISSIONS.forEach(m=>{
+    // MISSIONS
+    const mParts = [];
+    MISSIONS.forEach((m,idx)=>{
       const ms=getMissionState(m.id);
       if(ms.phase>0||ms.completed||ms.score>0){
-        compact.m[m.id]={
-          p: ms.phase||0,
-          s: ms.score||0,
-          c: ms.completed?1:0,
-          sk: ms.skipped?1:0,
-          h: ms.hintsUsed||0,
-          t: ms.time||0,
-          d: ms.difficulty||'basis',
-          td: ms.tasksDone||[],
-          bs: ms.bspStep||0,
-          qi: ms.quizIdx||0,
-          fa: ms.firstAttempts||{}
-        };
+        const d = ms.difficulty==='chef'?'C':'B';
+        const fa = _faToB36(ms.firstAttempts||{});
+        const td = _tdToB36(ms.tasksDone||[]);
+        const bs = ms.bspStep||0;
+        const qi = ms.quizIdx||0;
+        // id,phase,score,completed,diff,fa,td,bs,qi
+        mParts.push([m.id,ms.phase||0,ms.score||0,ms.completed?1:0,d,fa,td,bs,qi].join(','));
       }
     });
-    return btoa(unescape(encodeURIComponent(JSON.stringify(compact))));
-  }catch(e){return 'ERR';}
-}
-
-function parseCode(str){
-  try{
-    str = str.trim().replace(/\s/g,'');
-    const json = decodeURIComponent(escape(atob(str)));
-    const c = JSON.parse(json);
-    if(typeof c.x !== 'number') return null;
-    return {valid:true, data:c};
-  }catch(e){return null;}
+    // SPACED REP – store as missionIdx.questionIdx.fails
+    const srParts = (S.spacedRep||[]).slice(0,15).map(sr=>{
+      const mIdx = MISSIONS.findIndex(m=>m.id===sr.mId);
+      const qIdx = mIdx>=0 ? (MISSIONS[mIdx].quiz||[]).findIndex(q=>q.frage?.slice(0,30)===sr.qId?.slice(0,30)||q.frage?.slice(0,30).startsWith(sr.qId?.slice(0,30))) : -1;
+      if(mIdx<0||qIdx<0) return null;
+      return `${mIdx}.${qIdx}.${sr.fails||1}`;
+    }).filter(Boolean);
+    // JOURNAL – only mId + short date, max 6 entries
+    const jParts = (S.journal||[]).slice(0,6).map(e=>`${e.missionId||''}:${(e.date||'').replace(/\./g,'')}` );
+    // BADGES – only known badge IDs as indices
+    const BADGE_IDS=['speed','journal5','perfect','no_hints','expert','explorer','halfway','master','sim5','streak3','auftraege','gummibear','akademie'];
+    const bBits = (S.badges||[]).reduce((bits,b)=>{ const i=BADGE_IDS.indexOf(b); return i>=0?bits|(1<<i):bits; },0);
+    
+    const parts = [
+      encodeURIComponent(S.name||''),
+      S.avatarIdx||0,
+      S.xp||0,
+      _toB36(bBits),
+      S.streak||0,
+      S.simCount||0,
+      S.session||1,
+      mParts.join(';'),
+      srParts.join(','),
+      jParts.join(',')
+    ];
+    return btoa(unescape(encodeURIComponent(parts.join('|'))));
+  }catch(e){console.error('genCode error:',e);return 'ERR';}
 }
 
 function applyCode(str){
-  const parsed = parseCode(str);
-  if(!parsed||!parsed.valid) return false;
-  const c = parsed.data;
-  S.name        = c.n || S.name || '';
-  S.avatarIdx   = c.a || 0;
-  S.xp          = c.x || 0;
-  S.badges      = c.b || [];
-  S.streak      = c.st || 0;
-  S.simCount    = c.sc || 0;
-  S.session     = c.ss || 1;
-  // sr: migrate old format (with q object) to slim format
-  S.spacedRep = (c.sr || []).map(item => ({
-    qId: item.qId, mId: item.mId,
-    fails: item.fails||1, interval: item.interval||1
-  }));
-  S.evalDone    = c.eval?.done||false;
-  S.evalResponses= c.eval?.r||{};
-  S.journal     = (c.j||[]).map(e=>({date:e.d,text:e.t,missionId:e.id,reflection:e.r||null,starter:e.s||null}));
-  if(c.m){
-    Object.entries(c.m).forEach(([id,ms])=>{
-      S.missions[id] = {
-        phase:        ms.p||0,
-        score:        ms.s||0,
-        completed:    ms.c===1,
-        skipped:      ms.sk===1,
-        hintsUsed:    ms.h||0,
-        time:         ms.t||0,
-        difficulty:   ms.d||'basis',
-        tasksDone:    ms.td||[],
-        bspStep:      ms.bs||0,
-        quizIdx:      ms.qi||0,
-        firstAttempts:ms.fa||{}
-      };
-    });
-  }
-  saveState();
-  return true;
+  try{
+    str = str.trim().replace(/\s/g,'');
+    const raw = decodeURIComponent(escape(atob(str)));
+    
+    // ── Detect format: new compact (pipe-sep) vs old JSON ──
+    if(raw.startsWith('{')){
+      // OLD JSON FORMAT – backwards compatible
+      const c = JSON.parse(raw);
+      if(typeof c.x !== 'number') return false;
+      S.name        = c.n || S.name || '';
+      S.avatarIdx   = c.a || 0;
+      S.xp          = c.x || 0;
+      S.badges      = c.b || [];
+      S.streak      = c.st || 0;
+      S.simCount    = c.sc || 0;
+      S.session     = c.ss || 1;
+      S.spacedRep   = (c.sr||[]).map(item=>({qId:item.qId,mId:item.mId,fails:item.fails||1,interval:item.interval||1}));
+      S.evalDone    = c.eval?.done||false;
+      S.evalResponses=c.eval?.r||{};
+      S.journal     = (c.j||[]).map(e=>({date:e.d,text:e.t||'',missionId:e.id,reflection:e.r||null,starter:e.s||null}));
+      if(c.m){ Object.entries(c.m).forEach(([id,ms])=>{
+        S.missions[id]={phase:ms.p||0,score:ms.s||0,completed:ms.c===1,skipped:ms.sk===1,
+          hintsUsed:ms.h||0,time:ms.t||0,difficulty:ms.d||'basis',tasksDone:ms.td||[],
+          bspStep:ms.bs||0,quizIdx:ms.qi||0,firstAttempts:ms.fa||{}};
+      });}
+    } else {
+      // NEW COMPACT FORMAT
+      const BADGE_IDS=['speed','journal5','perfect','no_hints','expert','explorer','halfway','master','sim5','streak3','auftraege','gummibear','akademie'];
+      const parts = raw.split('|');
+      S.name       = decodeURIComponent(parts[0]||'') || S.name || '';
+      S.avatarIdx  = parseInt(parts[1])||0;
+      S.xp         = parseInt(parts[2])||0;
+      // badges from bitfield
+      const bBits  = _fromB36(parts[3]||'0');
+      S.badges     = BADGE_IDS.filter((_,i)=>(bBits>>i)&1);
+      S.streak     = parseInt(parts[4])||0;
+      S.simCount   = parseInt(parts[5])||0;
+      S.session    = parseInt(parts[6])||1;
+      // missions
+      if(parts[7]){ parts[7].split(';').forEach(mStr=>{
+        if(!mStr) return;
+        const [mid,ph,sc,co,d,fa,td,bs,qi]=mStr.split(',');
+        const m = MISSIONS.find(x=>x.id===mid);
+        const qCount = m?(m.quiz||[]).length:5;
+        S.missions[mid]={
+          phase:parseInt(ph)||0, score:parseInt(sc)||0, completed:co==='1',
+          skipped:false, hintsUsed:0, time:0,
+          difficulty:d==='C'?'chef':'basis',
+          firstAttempts:_b36ToFa(fa||'0',qCount),
+          tasksDone:_b36ToTd(td||'0'),
+          bspStep:parseInt(bs)||0, quizIdx:parseInt(qi)||0
+        };
+      });}
+      // spaced rep
+      S.spacedRep = [];
+      if(parts[8]){ parts[8].split(',').forEach(srStr=>{
+        if(!srStr) return;
+        const [mIdx,qIdx,fails]=srStr.split('.');
+        const m=MISSIONS[parseInt(mIdx)];
+        const q=m?(m.quiz||[])[parseInt(qIdx)]:null;
+        if(m&&q) S.spacedRep.push({qId:q.frage?.slice(0,30)||'',mId:m.id,fails:parseInt(fails)||1,interval:1});
+      });}
+      // journal – minimal reconstruction
+      S.journal = [];
+      if(parts[9]){ parts[9].split(',').forEach(jStr=>{
+        if(!jStr) return;
+        const [mId,dateRaw]=jStr.split(':');
+        const m=MISSIONS.find(x=>x.id===mId);
+        if(m&&dateRaw){
+          const d=dateRaw.length===8?`${dateRaw.slice(0,1)}.${dateRaw.slice(1,2)}.${dateRaw.slice(2)}`:dateRaw;
+          S.journal.push({date:d,text:`🔍 ${m.title}`,missionId:mId,reflection:null,starter:null});
+        }
+      });}
+    }
+    saveState();
+    return true;
+  }catch(e){console.error('applyCode error:',e);return false;}
 }
 
 // ========== BADGE CHECKS ==========
@@ -3953,7 +4013,7 @@ function startQuiz(difficulty){
   // Restore saved firstAttempts so resume doesn't lose previous answers
   const savedAttempts = getMissionState(m.id).firstAttempts||{};
   // Correct count = number of ok:true entries in savedAttempts up to resumeIdx
-  const resumeCorrect = Object.values(savedAttempts).filter(v=>v&&v.ok===true).length;
+  const resumeCorrect = Object.values(savedAttempts).filter(v=>v===1||v===true||(v&&v.ok===true)).length;
   quizData={questions,idx:resumeIdx,correct:resumeCorrect,hints:0,missionStart:Date.now(),firstAttempts:{...savedAttempts}};
   renderQuestion();
 }
@@ -4253,7 +4313,7 @@ function showFeedbackOk(q){
   if(!quizData.firstAttempts) quizData.firstAttempts={};
   const qi=quizData.idx;
   if(quizData.firstAttempts[qi]===undefined){
-    quizData.firstAttempts[qi]={ok:true, topic:quizData.questions[qi]?.topic||'', frage:quizData.questions[qi]?.frage?.replace(/<[^>]+>/g,'').slice(0,80)||''};
+    quizData.firstAttempts[qi]=1; // 1=correct, 0=wrong
   }
   quizData.correct++;
   fb.innerHTML=`<div class="feedback-box feedback-ok">
@@ -4301,7 +4361,7 @@ function showFeedbackErr(q,chosen,retry=false,errHint=null){
   if(!quizData.firstAttempts) quizData.firstAttempts={};
   const qi=quizData.idx;
   if(quizData.firstAttempts[qi]===undefined){
-    quizData.firstAttempts[qi]={ok:false, topic:quizData.questions[qi]?.topic||'', frage:quizData.questions[qi]?.frage?.replace(/<[^>]+>/g,'').slice(0,80)||''};
+    quizData.firstAttempts[qi]=0; // 1=correct, 0=wrong
   }
   const errMsg=av.incorrect[Math.floor(Math.random()*av.incorrect.length)];
   if(retry){
@@ -5028,7 +5088,7 @@ function schuelerUebungsseite(allMissions, getMissionState){
     const quiz = m.quiz || [];
     const schulbuch = m.schulbuchAufgaben || [];
     const fa = ms.firstAttempts || {};   // {idx: {ok:bool, topic:str, frage:str}}
-    const hasFa = Object.keys(fa).length > 0;
+    const hasFa = Object.keys(fa).length > 0 && Object.values(fa).some(v=>v!==undefined);
 
     // ── Build ok/err question lists ──────────────────────────
     // Prefer real firstAttempts data; fall back to score-approximation only if absent
@@ -5036,9 +5096,9 @@ function schuelerUebungsseite(allMissions, getMissionState){
     if(hasFa){
       quiz.forEach((q,i) => {
         const a = fa[i];
-        if(!a) return; // not yet answered (partial completion)
-        if(a.ok) okQ.push({...q, _faFrage: a.frage});
-        else     errQ.push({...q, _faFrage: a.frage});
+        if(a===undefined || a===null) return; // not yet answered
+        if(a===1 || a===true || (a&&a.ok)) okQ.push(q);
+        else errQ.push(q);
       });
     } else {
       const nCorrect = Math.round((sc/100) * quiz.length);
@@ -5291,7 +5351,7 @@ function openAuswertung(){
         const attempt = fa[qi];
         let isOk, hasData;
         if(attempt !== undefined){
-          isOk = attempt.ok === true;
+          isOk = attempt===1 || attempt===true || (attempt&&attempt.ok===true);
           hasData = true;
         } else {
           // Fallback: score approximation (less accurate)
@@ -5603,7 +5663,7 @@ ${srHtml}`;
       if(hasFa){
         quiz.forEach((q,qi)=>{
           const a = fa[qi];
-          if(a && a.ok === false){
+          if(a===0 || a===false || (a&&a.ok===false)){
             const sb = findSchulbuch(q.topic||'');
             wrongItems.push({mission:m, q, sb, qi});
           }
@@ -5756,8 +5816,8 @@ ${aufgabenHtml}`;
   // Generate QR code: fetch from API and convert to base64 so it works offline in PDF window
   // Generate QR code using inline pure-JS generator (no external dependency)
   const p3html = safePage(() => {
-    const qrUrl = 'https://mathe-daten-und-statistiken.vercel.app/?code=' + encodeURIComponent(code);
-    const qrDataUrl = qrgen.makeQRDataURL(qrUrl, 240);
+    const qrUrl = 'https://mathe-daten-und-statistiken.vercel.app/?c=' + encodeURIComponent(code);
+    const qrDataUrl = qrgen.makeQRDataURL(qrUrl, 240, 'L');
     return page3(qrDataUrl);
   }, 'Fortschrittscode');
 
@@ -6318,7 +6378,7 @@ if(!localStorage.getItem('dq_privacy_ok')){
 } else {
   // ?code= URL-Parameter hat immer Vorrang (QR-Code-Scan)
   const urlParams = new URLSearchParams(window.location.search);
-  const urlCode = urlParams.get('code');
+  const urlCode = urlParams.get('c') || urlParams.get('code');
   if(urlCode){
     try {
       // Override any existing localStorage state
