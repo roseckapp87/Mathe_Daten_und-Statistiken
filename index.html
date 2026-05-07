@@ -5314,6 +5314,26 @@ function openAuswertung(){
   const dateShort = now.toLocaleDateString('de-DE');
 
   const allMissions = MISSIONS.filter(m => m.num <= 5);
+  const UEBUNGEN = {
+    'm0':['Eigene Einstiegsaufgabe|Urliste, Strichliste und absolute Haeufigkeiten erstellen.',
+          'Eigene Einstiegsaufgabe|Absolute Haeufigkeiten aus einer Strichliste ablesen.',
+          'LS S. 183, Aufg. 8|Kreisdiagramm schaetzen und durch Nachmessen kontrollieren.'],
+    'm1':['LS S. 181, Aufg. 2 (alle)|Winkel fuer Anteile A–E berechnen; Kopf + Nachrechnen.',
+          'LS S. 182, Aufg. 7|Urlaubsziele: Saeulen- und Kreisdiagramm vollstaendig zeichnen.',
+          'LS S. 183, Aufg. 10|April-Wetter: rel. Haeufigkeiten berechnen, Kreisdiagramm.'],
+    'm2':['LS S. 187, Aufg. 1 (alle)|Mittel und Median fuer alle 8 Datenlisten a–h bestimmen.',
+          'LS S. 186, Beispiel 1|Baeckerei-Broetchen: Mittel berechnen, Aussage formulieren.',
+          'Eigene Übung|Drei Zahlenlisten erstellen; Mittelwert und Median bestimmen und vergleichen.'],
+    'm3':['LS S. 192, Aufg. 2|Boxplots der Marathonzeiten ablesen: Median, Min, Max, Quartile.',
+          'LS S. 192, Aufg. 3|75-m-Lauf: sortieren, Median bestimmen, Boxplot zeichnen.',
+          'LS S. 193, Aufg. 6|Saeulendiagrammen passende Boxplots zuordnen und begruenden.'],
+    'm4':['LS S. 196, Aufg. 1|Zeitgefuehl-Experiment: sortieren, Boxplots, Verbesserung beurteilen.',
+          'LS S. 196, Aufg. 3|Handbreiten-Experiment: Boxplot und Saeulendiagramm.',
+          'LS S. 197, Aufg. 7|Gewichte-Experiment: Daten mit Boxplot und Saeulendiagramm.'],
+    'm5':['LS S. 198, Aufg. 2|Klassengroessen: Mediane und arithmetische Mittelwerte vergleichen.',
+          'LS S. 198, Aufg. 5|Durchschnittstemperatur: Mittelwert verstehen und moegliche Temperaturwerte angeben.',
+          'LS S. 189, Aufg. 20|Aussagen ueber Median und Mittelwert beurteilen.'],
+  };
   const bonusMissions = MISSIONS.filter(m => m.num > 5);
 
   // ── Kennzahlen ──────────────────────────────────────────
@@ -5558,26 +5578,7 @@ ${srHtml}`;
     const unsicher = allMissions.filter(m => getMissionState(m.id).score > 0  && getMissionState(m.id).score < 80);
     const nichtG   = allMissions.filter(m => !getMissionState(m.id).skipped && (!getMissionState(m.id).score || getMissionState(m.id).score === 0));
 
-    const UEBUNGEN = {
-      'm0':['Eigene Einstiegsaufgabe|Urliste, Strichliste und absolute Haeufigkeiten erstellen.',
-            'Eigene Einstiegsaufgabe|Absolute Haeufigkeiten aus einer Strichliste ablesen.',
-            'LS S. 183, Aufg. 8|Kreisdiagramm schaetzen und durch Nachmessen kontrollieren.'],
-      'm1':['LS S. 181, Aufg. 2 (alle)|Winkel fuer Anteile A–E berechnen; Kopf + Nachrechnen.',
-            'LS S. 182, Aufg. 7|Urlaubsziele: Saeulen- und Kreisdiagramm vollstaendig zeichnen.',
-            'LS S. 183, Aufg. 10|April-Wetter: rel. Haeufigkeiten berechnen, Kreisdiagramm.'],
-      'm2':['LS S. 187, Aufg. 1 (alle)|Mittel und Median fuer alle 8 Datenlisten a–h bestimmen.',
-            'LS S. 186, Beispiel 1|Baeckerei-Broetchen: Mittel berechnen, Aussage formulieren.',
-            'Eigene Übung|Drei Zahlenlisten erstellen; Mittelwert und Median bestimmen und vergleichen.'],
-      'm3':['LS S. 192, Aufg. 2|Boxplots der Marathonzeiten ablesen: Median, Min, Max, Quartile.',
-            'LS S. 192, Aufg. 3|75-m-Lauf: sortieren, Median bestimmen, Boxplot zeichnen.',
-            'LS S. 193, Aufg. 6|Saeulendiagrammen passende Boxplots zuordnen und begruenden.'],
-      'm4':['LS S. 196, Aufg. 1|Zeitgefuehl-Experiment: sortieren, Boxplots, Verbesserung beurteilen.',
-            'LS S. 196, Aufg. 3|Handbreiten-Experiment: Boxplot und Saeulendiagramm.',
-            'LS S. 197, Aufg. 7|Gewichte-Experiment: Daten mit Boxplot und Saeulendiagramm.'],
-      'm5':['LS S. 198, Aufg. 2|Klassengroessen: Mediane und arithmetische Mittelwerte vergleichen.',
-            'LS S. 198, Aufg. 5|Durchschnittstemperatur: Mittelwert verstehen und moegliche Temperaturwerte angeben.',
-            'LS S. 189, Aufg. 20|Aussagen ueber Median und Mittelwert beurteilen.'],
-    };
+    // UEBUNGEN defined in openAuswertung scope
 
     const gutHtml = gut.length
       ? gut.map(m=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 10px;border-radius:6px;background:#f0fdf8;border:1px solid #a7f3d0;margin-bottom:5px">
