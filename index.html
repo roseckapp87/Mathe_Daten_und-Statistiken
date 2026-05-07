@@ -4791,12 +4791,13 @@ function clearTypewriter(el){
 function typewriter(el,text,cb,speed=25){
   if(!el)return;
   clearTypewriter(el);
-  const fullText = String(text ?? '');
+  // Use Array.from to correctly split by Unicode codepoints (fixes emojis, special chars)
+  const chars = Array.from(String(text ?? ''));
   el.textContent='';
   let i=0;
   const t=setInterval(()=>{
-    if(i < fullText.length){
-      el.textContent += fullText[i];
+    if(i < chars.length){
+      el.textContent += chars[i];
       i++;
     }else{
       clearInterval(t);
