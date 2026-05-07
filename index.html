@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>DATENQUEST – Detektiv-Schule Statistica</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
 /* ═══════════════════════════════════════
    DESIGN TOKENS – Kontrast-geprüft
@@ -1693,7 +1694,11 @@ function applyCode(str){
   S.streak      = c.st || 0;
   S.simCount    = c.sc || 0;
   S.session     = c.ss || 1;
-  S.spacedRep   = c.sr || [];
+  // sr: migrate old format (with q object) to slim format
+  S.spacedRep = (c.sr || []).map(item => ({
+    qId: item.qId, mId: item.mId,
+    fails: item.fails||1, interval: item.interval||1
+  }));
   S.evalDone    = c.eval?.done||false;
   S.evalResponses= c.eval?.r||{};
   S.journal     = (c.j||[]).map(e=>({date:e.d,text:e.t,missionId:e.id,reflection:e.r||null,starter:e.s||null}));
@@ -4020,7 +4025,7 @@ function renderCalc(q,area){
         const _qid=q.frage.slice(0,30);
         const _existing=S.spacedRep.find(x=>x.qId===_qid);
         if(_existing){_existing.fails=(_existing.fails||1)+1;_existing.interval=Math.max(1,(_existing.interval||1)-1);}
-        else{S.spacedRep.push({qId:_qid,mId:currentMission.id,q,fails:1,interval:1});}
+        else{S.spacedRep.push({qId:_qid,mId:currentMission.id,fails:1,interval:1});}
       } else {
         showFeedbackErr(q,'',true,errType?.hinweis);
       }
@@ -4214,7 +4219,7 @@ function showFeedbackOk(q){
         const _qid2=q.frage.slice(0,30);
         const _ex2=S.spacedRep.find(x=>x.qId===_qid2);
         if(_ex2){_ex2.fails=(_ex2.fails||1)+1;_ex2.interval=Math.max(1,(_ex2.interval||1)-1);}
-        else{S.spacedRep.push({qId:_qid2,mId:currentMission.id,q,fails:1,interval:r===1?1:2});}
+        else{S.spacedRep.push({qId:_qid2,mId:currentMission.id,fails:1,interval:r===1?1:2});}
       }
       saveState();
     });
@@ -4267,7 +4272,7 @@ function showFeedbackErr(q,chosen,retry=false,errHint=null){
     const _qid3=q.frage.slice(0,30);
     const _ex3=S.spacedRep.find(x=>x.qId===_qid3);
     if(_ex3){_ex3.fails=(_ex3.fails||1)+1;}
-    else{S.spacedRep.push({qId:_qid3,mId:currentMission.id,q,fails:1,interval:1});}
+    else{S.spacedRep.push({qId:_qid3,mId:currentMission.id,fails:1,interval:1});}
     document.getElementById('q-next')?.addEventListener('click',nextQuestion);
   }
 }
@@ -4328,13 +4333,16 @@ function finishQuiz(){
         const nextBtn=document.getElementById('finish-missions');
         if(nextBtn){
           nextBtn.textContent='📖 Geschichte weiter →';
-          nextBtn.onclick=()=>{
+          // Remove all existing listeners by replacing with clone
+          const freshBtn=nextBtn.cloneNode(true);
+          nextBtn.parentNode.replaceChild(freshBtn,nextBtn);
+          freshBtn.addEventListener('click',()=>{
             showStory(STORIES[outroKey], ()=>{
               showScreen('dashboard');updateDashboard();
             });
-          };
+          });
         }
-      }, 100);
+      }, 150);
     }
   }
 }
@@ -4348,8 +4356,13 @@ function addJournalEntry(m,ms,score){
     reflection:null  // filled when user saves
   };
   if(!S.journal)S.journal=[];
-  S.journal.unshift(entry);
-  if(S.journal.length>=5)checkBadges();
+  // Kein Duplikat: gleiche Mission am gleichen Tag nur einmal eintragen
+  const today = new Date().toLocaleDateString('de-DE');
+  const alreadyToday = S.journal.find(j => j.id === m.id && j.d === today);
+  if(!alreadyToday){
+    S.journal.unshift(entry);
+    if(S.journal.length>=5)checkBadges();
+  }
 }
 
 function renderFinish(score,time,ms){
@@ -5633,21 +5646,42 @@ ${srHtml}`;
 ${aufgabenHtml}`;
   }
 
-  // ── Seite 3: Fortschritts-Code ───────────────────────────
+  // ── Seite 3: QR-Code ─────────────────────────────────────
   function page3(){
+    const qrUrl = 'https://mathe-daten-und-statistiken.vercel.app/?code=' + encodeURIComponent(code);
+    // QR code as SVG via Google Charts API (works in print/PDF, no JS needed)
+    const qrApiUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=10&data=' + encodeURIComponent(qrUrl);
     return `
-<div style="display:flex;align-items:center;justify-content:center;min-height:60vh">
-  <div style="border:3px dashed #ccc;border-radius:12px;padding:32px;text-align:center;max-width:500px">
-    <div style="font-size:13px;text-transform:uppercase;letter-spacing:2px;color:#888;margin-bottom:6px">Fortschritts-Code</div>
-    <div style="font-size:11px;color:#aaa;margin-bottom:20px">Menue -> "Code laden" -> Code einfuegen -> "Laden"</div>
-    <div style="background:#f5f5f5;border-radius:8px;padding:16px;font-family:'Courier New',monospace;font-size:9px;word-break:break-all;overflow-wrap:anywhere;white-space:normal;text-align:left;line-height:2;border:1px solid #ddd">${code.match(/.{1,40}/g).join('<br>')}</div>
-    <div style="margin-top:16px;font-size:11px;color:#aaa">${name} &middot; ${S.xp} XP &middot; ${dateShort}</div>
-    <div style="margin-top:4px;font-size:11px;color:#aaa">DatenQuest &middot; Statistik &middot; Klasse 6 &middot; Lambacher Schweizer (Klett)</div>
+<div style="display:flex;align-items:center;justify-content:center;min-height:70vh">
+  <div style="border:3px dashed #ccc;border-radius:16px;padding:40px 36px;text-align:center;max-width:420px">
+    <div style="font-size:13px;text-transform:uppercase;letter-spacing:2px;color:#888;margin-bottom:4px;font-weight:700">Mein Fortschritts-Code</div>
+    <div style="font-size:12px;color:#aaa;margin-bottom:24px">QR-Code scannen → direkt weitermachen</div>
+    <div style="display:inline-block;padding:12px;border:2px solid #e0e0e0;border-radius:12px;background:#fff;margin-bottom:20px">
+      <img src="${qrApiUrl}" width="220" height="220" alt="QR-Code" style="display:block;border-radius:4px">
+    </div>
+    <div style="font-size:11px;color:#aaa;margin-bottom:6px">
+      Kamera-App öffnen → Code scannen → Seite öffnet sich automatisch mit deinem Fortschritt
+    </div>
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid #eee">
+      <div style="font-size:14px;font-weight:700;color:#333;margin-bottom:4px">${name}</div>
+      <div style="font-size:11px;color:#aaa">${S.xp} XP &middot; ${dateShort} &middot; DatenQuest Kl. 6</div>
+    </div>
   </div>
 </div>`;
   }
 
   // ── HTML zusammenbauen ───────────────────────────────────
+  // Sichere Seitenerzeugung – Fehler in einer Seite blockieren nicht die ganze PDF
+  function safePage(fn, fallbackLabel){
+    try { return fn(); }
+    catch(e){ console.error('PDF-Fehler in '+fallbackLabel+':', e);
+      return `<div style="color:red;padding:20px">Fehler beim Erstellen von ${fallbackLabel}: ${e.message}</div>`; }
+  }
+  const p1html = safePage(page1, 'Lehrerauswertung');
+  const p2html = safePage(page2, 'Lernplan');
+  const p4html = safePage(page4, 'Übungsaufgaben');
+  const p3html = safePage(page3, 'Fortschrittscode');
+
   const html = `<!DOCTYPE html>
 <html lang="de">
 <head>
@@ -5677,19 +5711,71 @@ ${aufgabenHtml}`;
 </style>
 </head>
 <body>
-<div class="page">${page1()}</div>
-<div class="page pagebreak">${page2()}</div>
-<div class="page pagebreak">${page4()}</div>
-<div class="page pagebreak">${page3()}</div>
+<div class="page">${p1html}</div>
+<div class="page pagebreak">${p2html}</div>
+<div class="page pagebreak">${p4html}</div>
+<div class="page pagebreak">${p3html}</div>
 <div class="no-print" style="position:fixed;bottom:20px;right:20px;z-index:999">
   <button onclick="window.print()" style="background:#f6c90e;border:none;padding:12px 24px;font-size:15px;font-weight:700;border-radius:8px;cursor:pointer;font-family:inherit;box-shadow:0 4px 12px rgba(0,0,0,.2)">Drucken / Als PDF speichern</button>
 </div>
 </body>
 </html>`;
 
-  const w = window.open('','_blank');
-  w.document.write(html);
-  w.document.close();
+  // Show code modal first (so code is always accessible even if popup blocked)
+  showCodeModal(code, name, ()=>{
+    try {
+      const w = window.open('','_blank');
+      if(!w){
+        toast('Popup blockiert – bitte in Safari unter Einstellungen erlauben, dann nochmal tippen.','warn');
+        return;
+      }
+      w.document.write(html);
+      w.document.close();
+    } catch(err) {
+      console.error('PDF-Fehler:', err);
+      toast('PDF-Fehler: ' + err.message, 'err');
+    }
+  });
+}
+
+function showCodeModal(code, name, onPdfClick){
+  const lines = code.match(/.{1,44}/g) || [code];
+  showModal(`
+    <div style="text-align:center;margin-bottom:12px">
+      <div style="font-size:16px;font-weight:700;margin-bottom:4px">📋 Dein Fortschritts-Code</div>
+      <div style="font-size:12px;color:var(--text-dim)">Tippe auf das Feld → Alles markieren → Kopieren</div>
+    </div>
+    <textarea id="code-modal-text" readonly
+      style="width:100%;padding:12px;border-radius:8px;background:var(--bg-input);
+             border:1.5px solid var(--accent);color:var(--accent);font-family:'Courier New',monospace;
+             font-size:11px;line-height:1.8;word-break:break-all;resize:none;
+             -webkit-user-select:all;user-select:all;cursor:text"
+      rows="7">${lines.join('\n')}</textarea>
+    <button class="btn btn-secondary btn-full" style="margin-top:8px" id="code-modal-select">
+      📋 Alles markieren & kopieren
+    </button>
+    <button class="btn btn-primary btn-full" style="margin-top:8px" id="code-modal-pdf">
+      📄 Auswertungs-PDF öffnen
+    </button>
+    <div style="font-size:11px;color:var(--text-dim);text-align:center;margin-top:8px">
+      ${name} · DatenQuest · ${new Date().toLocaleDateString('de-DE')}
+    </div>
+  `);
+  setTimeout(()=>{
+    const ta = document.getElementById('code-modal-text');
+    const selBtn = document.getElementById('code-modal-select');
+    const pdfBtn = document.getElementById('code-modal-pdf');
+    ta?.addEventListener('click', ()=>{ ta.select(); });
+    selBtn?.addEventListener('click', ()=>{
+      ta?.select();
+      try { document.execCommand('copy'); toast('Code kopiert!','ok'); }
+      catch(e){ toast('Bitte manuell kopieren (Strg+C / Cmd+C)','warn'); }
+    });
+    pdfBtn?.addEventListener('click', ()=>{
+      closeModal();
+      if(onPdfClick) onPdfClick();
+    });
+  }, 50);
 }
 
 document.getElementById('class-reset-btn')?.addEventListener('click',()=>{
@@ -6151,7 +6237,27 @@ if(!localStorage.getItem('dq_privacy_ok')){
     });
   }
 } else {
-  if(S.name){
+  // ?code= URL-Parameter hat immer Vorrang (QR-Code-Scan)
+  const urlParams = new URLSearchParams(window.location.search);
+  const urlCode = urlParams.get('code');
+  if(urlCode){
+    try {
+      // Override any existing localStorage state
+      if(applyCode(decodeURIComponent(urlCode))){
+        saveState();
+        window.history.replaceState({}, '', window.location.pathname);
+        showScreen('dashboard');
+        updateDashboard();
+        setTimeout(()=>toast('Willkommen zurück! Fortschritt geladen ✓','ok'), 300);
+      } else {
+        showScreen('splash');
+        setTimeout(()=>toast('QR-Code konnte nicht gelesen werden.','warn'), 300);
+      }
+    } catch(e){
+      console.error('URL-Code Fehler:',e);
+      showScreen('splash');
+    }
+  } else if(S.name){
     showScreen('dashboard');
     updateDashboard();
   } else {
