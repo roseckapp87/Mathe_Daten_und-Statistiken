@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>DATENQUEST – Detektiv-Schule Statistica</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
 /* ═══════════════════════════════════════
    DESIGN TOKENS – Kontrast-geprüft
@@ -5157,7 +5156,7 @@ function schuelerUebungsseite(allMissions, getMissionState){
 </div>`;
 }
 
-function openAuswertung(){
+async function openAuswertung(){
   const name = S.name || 'Detektiv';
   const code = genCode();
   const rank = getRank(S.xp);
@@ -5648,17 +5647,26 @@ ${aufgabenHtml}`;
 
   // ── Seite 3: QR-Code ─────────────────────────────────────
   function page3(qrDataUrl){
+    const qrBlock = qrDataUrl
+      ? `<div style="display:inline-block;padding:12px;border:2px solid #e0e0e0;border-radius:12px;background:#fff;margin-bottom:20px">
+           <img src="${qrDataUrl}" width="240" height="240" alt="QR-Code" style="display:block">
+         </div>
+         <div style="font-size:11px;color:#aaa;margin-bottom:6px">
+           Kamera-App öffnen → Code scannen → Seite öffnet sich automatisch mit deinem Fortschritt
+         </div>`
+      : `<div style="background:#f5f5f5;border-radius:8px;padding:16px;font-family:'Courier New',monospace;
+              font-size:8px;word-break:break-all;line-height:1.8;margin-bottom:12px;text-align:left">
+           ${'https://mathe-daten-und-statistiken.vercel.app/?code='+encodeURIComponent(code)}
+         </div>
+         <div style="font-size:11px;color:#aaa;margin-bottom:6px">
+           URL oben in Safari eingeben um den Fortschritt zu laden
+         </div>`;
     return `
 <div style="display:flex;align-items:center;justify-content:center;min-height:70vh">
-  <div style="border:3px dashed #ccc;border-radius:16px;padding:40px 36px;text-align:center;max-width:420px">
+  <div style="border:3px dashed #ccc;border-radius:16px;padding:40px 36px;text-align:center;max-width:440px">
     <div style="font-size:13px;text-transform:uppercase;letter-spacing:2px;color:#888;margin-bottom:4px;font-weight:700">Mein Fortschritts-Code</div>
     <div style="font-size:12px;color:#aaa;margin-bottom:24px">QR-Code scannen → direkt weitermachen</div>
-    <div style="display:inline-block;padding:12px;border:2px solid #e0e0e0;border-radius:12px;background:#fff;margin-bottom:20px">
-      <img src="${qrDataUrl}" width="220" height="220" alt="QR-Code" style="display:block">
-    </div>
-    <div style="font-size:11px;color:#aaa;margin-bottom:6px">
-      Kamera-App öffnen → Code scannen → Seite öffnet sich automatisch mit deinem Fortschritt
-    </div>
+    ${qrBlock}
     <div style="margin-top:20px;padding-top:16px;border-top:1px solid #eee">
       <div style="font-size:14px;font-weight:700;color:#333;margin-bottom:4px">${name}</div>
       <div style="font-size:11px;color:#aaa">${S.xp} XP &middot; ${dateShort} &middot; DatenQuest Kl. 6</div>
@@ -5677,30 +5685,27 @@ ${aufgabenHtml}`;
   const p1html = safePage(page1, 'Lehrerauswertung');
   const p2html = safePage(page2, 'Lernplan');
   const p4html = safePage(page4, 'Übungsaufgaben');
-  // Generate QR code locally using QRCode.js (no external API needed)
-  const p3html = safePage(()=>{
+  // Generate QR code locally – async because Safari renders QR after a tick
+  // Generate QR code: fetch from API and convert to base64 so it works offline in PDF window
+  const p3html = await (async () => {
     const qrUrl = 'https://mathe-daten-und-statistiken.vercel.app/?code=' + encodeURIComponent(code);
-    // Create a hidden canvas, render QR into it, extract as data URL
-    const qrContainer = document.createElement('div');
-    qrContainer.style.cssText = 'position:absolute;left:-9999px;top:-9999px;width:220px;height:220px';
-    document.body.appendChild(qrContainer);
-    let qrDataUrl = '';
+    const apiUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=10&data=' + encodeURIComponent(qrUrl);
     try {
-      new QRCode(qrContainer, {
-        text: qrUrl,
-        width: 220, height: 220,
-        colorDark: '#000000', colorLight: '#ffffff',
-        correctLevel: QRCode.CorrectLevel.M
+      const resp = await fetch(apiUrl);
+      if(!resp.ok) throw new Error('API nicht erreichbar');
+      const blob = await resp.blob();
+      const b64 = await new Promise((res,rej) => {
+        const reader = new FileReader();
+        reader.onload = () => res(reader.result);
+        reader.onerror = rej;
+        reader.readAsDataURL(blob);
       });
-      // QRCode.js renders a canvas – grab it
-      const canvas = qrContainer.querySelector('canvas');
-      if(canvas) qrDataUrl = canvas.toDataURL('image/png');
-    } finally {
-      document.body.removeChild(qrContainer);
+      return page3(b64);
+    } catch(e) {
+      // Fallback: show URL as text if QR not available
+      return page3(null);
     }
-    if(!qrDataUrl) throw new Error('QR-Canvas nicht gefunden');
-    return page3(qrDataUrl);
-  }, 'Fortschrittscode');
+  })();
 
   const html = `<!DOCTYPE html>
 <html lang="de">
